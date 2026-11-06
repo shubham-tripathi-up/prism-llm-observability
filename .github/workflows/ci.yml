@@ -1,21 +1,17 @@
-name: prism-ci
+name: ci
 
 on:
   push:
     branches: [main]
-    paths: ["prism/**", ".github/workflows/prism-ci.yml"]
   pull_request:
-    paths: ["prism/**", ".github/workflows/prism-ci.yml"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.9", "3.12"]
-    defaults:
-      run:
-        working-directory: prism
+        python-version: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
