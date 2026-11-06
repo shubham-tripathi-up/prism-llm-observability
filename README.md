@@ -8,7 +8,7 @@ AI features are hard to debug: when an answer is wrong, it's not obvious which s
 
 - [x] Package scaffold and CI
 - [x] Tracing: spans with timings, tokens, cost and nesting, stored in SQLite
-- [ ] Evaluators: relevance, faithfulness to sources, length checks
+- [x] Evaluators: relevance, faithfulness to sources, length checks
 - [ ] CLI report: latency percentiles, cost per step, eval scores, regressions
 
 No external dependencies; standard library only.
@@ -32,6 +32,22 @@ with tracer.span("answer_question", question="Where is my order?") as span:
 ```
 
 Spans opened inside other spans become their children, errors are recorded and re-raised, and token usage is priced per model.
+
+## Evaluating answers
+
+```python
+from prism.evals import Case, run_suite
+
+sources = ["Refunds are issued to the original payment method within 5 days."]
+result = run_suite([
+    Case("When do refunds arrive?", "Refunds arrive within 5 days.", sources),
+    Case("When do refunds arrive?", "Refunds arrive by drone tomorrow.", sources),
+])
+print(result.pass_rates)   # {'relevance': 1.0, 'faithfulness': 0.5, 'length': 1.0}
+print(result.failures)     # the drone answer, flagged as unsupported by the sources
+```
+
+The checks are deterministic and need no API key: relevance measures how much of the question the answer covers, and faithfulness flags sentences whose content isn't backed by the retrieved sources. An LLM-as-judge evaluator is planned behind the same interface.
 
 ## Develop
 
