@@ -9,7 +9,7 @@ AI features are hard to debug: when an answer is wrong, it's not obvious which s
 - [x] Package scaffold and CI
 - [x] Tracing: spans with timings, tokens, cost and nesting, stored in SQLite
 - [x] Evaluators: relevance, faithfulness to sources, length checks
-- [ ] CLI report: latency percentiles, cost per step, eval scores, regressions
+- [x] CLI report: latency percentiles, cost per step, error counts, regressions against a baseline
 
 No external dependencies; standard library only.
 
@@ -48,6 +48,33 @@ print(result.failures)     # the drone answer, flagged as unsupported by the sou
 ```
 
 The checks are deterministic and need no API key: relevance measures how much of the question the answer covers, and faithfulness flags sentences whose content isn't backed by the retrieved sources. An LLM-as-judge evaluator is planned behind the same interface.
+
+## CLI
+
+```bash
+pip install -e .
+prism demo --requests 40              # simulate a small RAG app and record traces
+prism report                          # summary per span
+prism report --save-baseline base.json
+prism report --baseline base.json     # exits 1 if latency, cost or errors got worse
+```
+
+```
+span             count  errors  p50_ms  p95_ms  tokens  cost_usd
+---------------  -----  ------  ------  ------  ------  --------
+answer_question  40     0       9.63    13.7    0       0.0
+generate         40     2       5.8     8.42    38546   0.008862
+retrieve         40     0       2.83    4.83    0       0.0
+```
+
+The baseline check is designed for CI: record a run before a prompt or model change, then fail the build if things regress.
+
+## Next
+
+- LLM-as-judge evaluator behind the same interface
+- Store eval scores alongside traces and show them in the report
+- OpenTelemetry export
+- A small web dashboard
 
 ## Develop
 
